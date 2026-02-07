@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cek Kuota & Status</title>
+    <meta name="description" content="Cek kuota dan status Circle, XL & Axis dengan mudah">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 2rem;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transform: translateZ(0);
+        }
+
+        /* Background Animation - Optimized for scroll */
+        .background-container {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            will-change: transform;
+            transform: translateZ(0);
+            contain: strict;
+        }
+
+        .background-gradient {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #0f0f0f 0%, #34d399 25%, #5e96ea 50%, #2dd4bf 75%, #5eead4 100%);
+            background-size: 200% 200%;
+            animation: gradient-xy 20s ease infinite;
+            will-change: background-position;
+            transform: translateZ(0);
+        }
+
+        /* Optimized blobs with smaller blur and GPU acceleration */
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(50px);
+            opacity: 0.2;
+            animation: blob 10s infinite;
+            will-change: transform;
+            contain: layout style paint;
+            transform: translateZ(0);
+        }
+
+        .blob-1 {
+            top: 0;
+            left: 25%;
+            width: 280px;
+            height: 280px;
+            background-color: #18eeee;
+            animation-delay: 0s;
+        }
+
+        .blob-2 {
+            top: 0;
+            right: 25%;
+            width: 280px;
+            height: 280px;
+            background-color: #34d399;
+            animation-delay: 2s;
+        }
+
+        .blob-3 {
+            bottom: 0;
+            left: 33.33%;
+            width: 280px;
+            height: 280px;
+            background-color: #18f3f3;
+            animation-delay: 4s;
+        }
+
+        .background-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(255, 255, 255, 0.3), transparent);
+            transform: translateZ(0);
+        }
+
+        @keyframes blob {
+            0% {
+                transform: translate3d(0px, 0px, 0) scale(1);
+            }
+            33% {
+                transform: translate3d(15px, -25px, 0) scale(1.05);
+            }
+            66% {
+                transform: translate3d(-10px, 10px, 0) scale(0.95);
+            }
+            100% {
+                transform: translate3d(0px, 0px, 0) scale(1);
+            }
+        }
+
+        @keyframes gradient-xy {
+            0%, 100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Header - Optimized for scroll */
+        header {
+            text-align: center;
+            padding: 3rem 1rem;
+            position: relative;
+            z-index: 1;
+            transform: translateZ(0);
+        }
+
+        .header-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            max-width: 32rem;
+            margin: 0 auto;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.2);
+            transform: translateZ(0);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            color: white;
+            text-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transform: translateZ(0);
+        }
+
+        .icon-phone {
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .title-text {
+            background: linear-gradient(135deg, #f8f0f0, #fce7f3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        header p {
+            color: rgba(0, 0, 0, 0.9);
+            font-size: 1.125rem;
+            font-weight: 500;
+        }
+
+        /* Main Container - Scroll optimized */
+        main {
+            flex: 1;
+            width: 100%;
+            max-width: 28rem;
+            margin: 0 auto;
+            padding: 0 1rem 2rem;
+            position: relative;
+            z-index: 1;
+            transform: translateZ(0);
+            will-change: transform;
+        }
+
+        /* Tabs - Reduced backdrop blur for scroll */
+        .tabs {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            transform: translateZ(0);
+        }
+
+        .tabs-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding: 0.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transform: translateZ(0);
+        }
+
+        .tab-button {
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease;
+            background: transparent;
+            color: rgb(0, 0, 0);
+            white-space: normal;
+            text-align: center;
+            line-height: 1.2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateZ(0);
+            will-change: transform, background;
+        }
+
+        .tab-button:hover {
+            background: rgba(185, 183, 183, 0.3);
+            color: rgb(12, 11, 11);
+        }
+
+        .tab-button.active {
+            color: rgb(255, 255, 255);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .tab-button[data-tab="circle"].active {
+            background: linear-gradient(135deg, #8b5cf6, hsl(292, 83%, 32%));
+        }
+
+        .tab-button[data-tab="xl-axis"].active {
+            background: linear-gradient(135deg, #121312, #06b6d4);
+        }
+
+        /* Cards - Optimized for scroll */
+        .card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.15);
+            border: 2px solid rgba(139, 92, 246, 0.5);
+            border-radius: 1rem;
+            overflow: hidden;
+            animation: scaleIn 0.3s ease;
+            transform: translateZ(0);
+            will-change: transform;
+            contain: layout style paint;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #8b5cf6, #d946ef);
+            color: rgb(255, 255, 255);
+            padding: 1.25rem;
+            border-radius: 0.75rem 0.75rem 0 0;
+            transform: translateZ(0);
+        }
+
+        .card-header.xl-axis {
+            background: linear-gradient(135deg, #61e677, #06b6d4);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: rgb(255, 255, 255);
+            margin-bottom: 0.25rem;
+        }
+
+        .card-description {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.875rem;
+        }
+
+        .card-content {
+            padding: 1.5rem;
+            transform: translateZ(0);
+        }
+
+        /* Forms - Optimized */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #252527;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #ffffff;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            background: #ffffff;
+            transform: translateZ(0);
+            will-change: border-color, box-shadow;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            background: rgb(255, 255, 255);
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1);
+        }
+
+        .input-hint {
+            font-size: 0.75rem;
+            color: #3f3c3c;
+        }
+
+        /* Buttons - Optimized for scroll */
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        button.action-button {
+            padding: 0.875rem 1.25rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: rgb(255, 255, 255);
+            transform: translateZ(0);
+            will-change: transform;
+        }
+
+        button.action-button:hover {
+            transform: translateY(-2px) translateZ(0);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        button.action-button:active {
+            transform: scale(0.98) translateZ(0);
+        }
+
+        button.action-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-check-quota {
+            background: linear-gradient(135deg, #8b5cf6, #9333ea, #d946ef);
+            box-shadow: 0 4px 10px rgba(139, 92, 246, 0.25);
+        }
+
+        .btn-check-quota:hover {
+            background: linear-gradient(135deg, #7c3aed, #7e22ce, #c026d3);
+        }
+
+        .btn-check-membership {
+            background: linear-gradient(135deg, #06b6d4, #14b8a6, #10b981);
+            box-shadow: 0 4px 10px rgba(6, 182, 212, 0.25);
+        }
+
+        .btn-check-membership:hover {
+            background: linear-gradient(135deg, #0891b2, #059669, #059669);
+        }
+
+        .btn-check-xl {
+            background: linear-gradient(135deg, #10b981, #14b8a6, #06b6d4);
+            box-shadow: 0 4px 10px rgba(163, 247, 247, 0.25);
+            width: 100%;
+        }
+
+        .btn-check-xl:hover {
+            background: linear-gradient(135deg, #059669, #4be7a6, #0891b2);
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Result Cards - Scroll optimized */
+        .result-card {
+            margin-top: 1rem;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(217, 70, 239, 0.05));
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border: 2px solid rgba(139, 92, 246, 0.5);
+            border-radius: 1rem;
+            box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            animation: slideUp 0.4s ease;
+            transform: translateZ(0);
+            will-change: transform;
+            contain: layout style paint;
+        }
+
+        .result-card.membership {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.05), rgba(16, 185, 129, 0.05));
+            border-color: rgba(6, 182, 212, 0.5);
+        }
+
+        .result-card.xl-axis {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(20, 184, 166, 0.05));
+            border-color: rgba(16, 185, 129, 0.5);
+        }
+
+        .result-card-header {
+            background: linear-gradient(135deg, #8b5cf6, #d946ef);
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem 0.5rem 0 0;
+            transform: translateZ(0);
+        }
+
+        .result-card-header.membership {
+            background: linear-gradient(135deg, #06b6d4, #10b981);
+        }
+
+        .result-card-header.xl-axis {
+            background: linear-gradient(135deg, #10b981, #18f0ba);
+        }
+
+        .result-card-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .result-card-content {
+            padding: 1.25rem;
+            transform: translateZ(0);
+        }
+
+        /* Msisdn Display */
+        .msisdn-display {
+            background: linear-gradient(135deg, #8b5cf6, #9333ea);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            color: rgb(253, 253, 253);
+            text-align: center;
+            transform: translateZ(0);
+        }
+
+        .msisdn-display-label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+        }
+
+        .msisdn-display-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        /* Quota Highlight - Optimized */
+        .quota-highlight {
+            background: linear-gradient(135deg, #d946ef, #f472b6, #fb7185);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            color: white;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(217, 70, 239, 0.15);
+            transform: translateZ(0);
+        }
+
+        .quota-highlight-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .quota-highlight-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            line-height: 1;
+        }
+
+        /* Detail Items - Scroll optimized */
+        .detail-section {
+            margin-top: 1rem;
+            transform: translateZ(0);
+        }
+
+        .detail-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #6d28d9;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .detail-title::before {
+            content: '';
+            width: 0.5rem;
+            height: 0.5rem;
+            background: #8b5cf6;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .detail-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: 16rem;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+            transform: translateZ(0);
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            transform: translateZ(0);
+            will-change: transform, box-shadow;
+            contain: layout style paint;
+        }
+
+        .detail-item:hover {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px) translateZ(0);
+        }
+
+        .detail-item-label {
+            font-weight: 500;
+            color: #374151;
+            font-size: 0.875rem;
+        }
+
+        .detail-item-value {
+            font-weight: 700;
+            color: #8b5cf6;
+            font-size: 1rem;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-badge.green {
+            background: #dcfce7;
+            color: #14532d;
+        }
+
+        .status-badge.red {
+            background: #fecaca;
+            color: #7f1d1d;
+        }
+
+        .status-badge.yellow {
+            background: #fef08a;
+            color: #744210;
+        }
+
+        .status-badge.blue {
+            background: #bfdbfe;
+            color: #1e3a8a;
+        }
+
+        /* Error Card - Optimized */
+        .error-card {
+            background: linear-gradient(135deg, #fef2f2, #ffedd5);
+            border: 2px solid #fca5a5;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            animation: shake 0.5s ease;
+            box-shadow: 0 4px 8px rgba(252, 165, 165, 0.2);
+            transform: translateZ(0);
+        }
+
+        .error-title {
+            color: #b91c1c;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .error-message {
+            color: #9b2c2c;
+            font-size: 0.875rem;
+            background: rgba(254, 202, 202, 0.5);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+        }
+
+        /* XL Axis Result */
+        .result-pre {
+            background: linear-gradient(135deg, #d1fae5, #e0f2fe);
+            border: 1px solid #baeeba;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 0.875rem;
+            font-family: 'SF Mono', 'Roboto Mono', monospace;
+            line-height: 1.5;
+            transform: translateZ(0);
+        }
+
+        /* Footer - Optimized for scroll */
+        footer {
+            text-align: center;
+            padding: 2rem 1rem;
+            position: relative;
+            z-index: 1;
+            transform: translateZ(0);
+        }
+
+        .footer-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border-radius: 1rem;
+            padding: 1rem;
+            max-width: 20rem;
+            margin: 0 auto;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.2);
+            transform: translateZ(0);
+        }
+
+        footer p {
+            color: rgba(0, 0, 0, 0.9);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        footer p.copyright {
+            margin-bottom: 0.5rem;
+        }
+
+        footer p.credit {
+            color: rgba(12, 12, 12, 0.7);
+            font-size: 0.75rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            .tabs-list {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+
+            .header-card {
+                padding: 1rem;
+            }
+
+            /* Reduce animations on mobile for better scroll performance */
+            .blob {
+                animation: blob 12s infinite;
+                filter: blur(40px);
+            }
+
+            .background-gradient {
+                animation: gradient-xy 25s ease infinite;
+            }
+
+            /* Disable backdrop filter on low-end mobile devices */
+            @supports (backdrop-filter: blur(0px)) {
+                .header-card,
+                .tabs-list,
+                .card,
+                .result-card,
+                .footer-card {
+                    backdrop-filter: blur(4px);
+                    -webkit-backdrop-filter: blur(4px);
+                }
+            }
+        }
+
+        /* Performance optimization: Reduce/Disable animations on low-end devices */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Improve scroll performance for touch devices */
+        @media (hover: none) and (pointer: coarse) {
+            button.action-button:hover {
+                transform: none;
+                box-shadow: none;
+            }
+
+            .detail-item:hover {
+                transform: none;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            }
+
+            .tab-button:hover {
+                transform: none;
+            }
+
+            /* Disable animations on touch devices for smoother scroll */
+            .blob {
+                animation: none;
+                opacity: 0.15;
+            }
+
+            .background-gradient {
+                animation: none;
+                background-position: 0% 50%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background -->
+    <div class="background-container">
+        <div class="background-gradient"></div>
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+        <div class="background-overlay"></div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="header-card">
+            <h1>
+                <div class="icon-phone">📱</div>
+                <span class="title-text">Cek Kuota & Status</span>
+            </h1>
+            <p>✨ Cek kuota dan status Anda dengan mudah - Circle, XL & Axis ✨</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <div class="tabs">
+            <!-- Tab Buttons -->
+            <div class="tabs-list">
+                <button class="tab-button active" data-tab="circle" onclick="switchTab('circle')">
+                    Cek Kuota / Status Circle
+                </button>
+                <button class="tab-button" data-tab="xl-axis" onclick="switchTab('xl-axis')">
+                    Cek Kuota XL & Axis
+                </button>
+            </div>
+
+            <!-- Circle Tab Content -->
+            <div id="tab-circle" class="tab-content active">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">📱 Cek Kuota & Status Circle</div>
+                        <div class="card-description">Masukkan nomor HP Anda untuk mengecek kuota dan status keanggotaan Circle</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-group">
+                            <label for="msisdn">Nomor HP (MSISDN)</label>
+                            <input
+                                type="tel"
+                                id="msisdn"
+                                placeholder="Contoh: 6281234567890"
+                                onkeypress="handleKeyPress(event)"
+                            >
+                            <div class="input-hint">Gunakan format diawali 62 (contoh: 6281xxxxxxxx). Format 08 akan otomatis dikonversi ke 62.</div>
+                        </div>
+
+                        <div class="button-group">
+                            <button class="action-button btn-check-quota" onclick="checkQuota()" id="btn-quota">
+                                <span class="btn-text">📊 Cek Kuota</span>
+                            </button>
+                            <button class="action-button btn-check-membership" onclick="checkMembership()" id="btn-membership">
+                                <span class="btn-text">👤 Cek Status</span>
+                            </button>
+                        </div>
+
+                        <div id="error-container-circle"></div>
+                        <div id="result-quota"></div>
+                        <div id="result-membership"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- XL Axis Tab Content -->
+            <div id="tab-xl-axis" class="tab-content">
+                <div class="card">
+                    <div class="card-header xl-axis">
+                        <div class="card-title">📊 Cek Paket XL & Axis</div>
+                        <div class="card-description">Masukkan nomor HP Anda untuk mengecek paket XL atau Axis</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-group">
+                            <label for="nomor">Nomor HP</label>
+                            <input
+                                type="tel"
+                                id="nomor"
+                                placeholder="Contoh: 0877123456789"
+                                onkeypress="handleKeyPress(event)"
+                            >
+                            <div class="input-hint">Gunakan format diawali 08 (contoh: 08xxxxxxxx). Format 62 akan otomatis dikonversi ke 08.</div>
+                        </div>
+
+                        <button class="action-button btn-check-xl" onclick="checkXLAxis()" id="btn-xl">
+                            <span class="btn-text">📊 Cek Paket</span>
+                        </button>
+
+                        <div id="error-container-xl"></div>
+                        <div id="result-container-xl"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-card">
+            <p class="copyright">✨ © 2025 Roby Ch ✨</p>
+            <p class="credit">Dibuat dengan ❤️ menggunakan jiwa ketekunan</p>
+        </div>
+    </footer>
+
+    <script>
+        const API_BASE = {
+            circleQuota: 'https://leonskennedy.my.id/cekcircle/cek_kuota.php',
+            circleMembership: 'https://leonskennedy.my.id/cekcircle/cek_membership.php',
+            xlAxis: 'https://apigw.kmsp-store.com/sidompul/v4/cek_kuota'
+        };
+
+        let currentTab = 'circle';
+        let currentCircleView = null; // 'quota' or 'membership'
+
+        function switchTab(tab) {
+            currentTab = tab;
+
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.tab === tab) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`tab-${tab}`).classList.add('active');
+        }
+
+        function normalizePhoneNumber(input, provider) {
+            let phone = input.replace(/\D/g, '');
+
+            if (provider === 'circle') {
+                if (phone.startsWith('08')) {
+                    phone = '62' + phone.substring(1);
+                }
+            } else {
+                if (phone.startsWith('62')) {
+                    phone = '0' + phone.substring(2);
+                }
+            }
+
+            return phone;
+        }
+
+        function validatePhone(phone, provider) {
+            if (!phone) return false;
+
+            if (provider === 'circle') {
+                return /^62\d{9,12}$/.test(phone);
+            } else {
+                return /^08\d{8,11}$/.test(phone);
+            }
+        }
+
+        function setButtonLoading(buttonId, isLoading) {
+            const button = document.getElementById(buttonId);
+            const btnText = button.querySelector('.btn-text');
+
+            if (isLoading) {
+                button.disabled = true;
+                btnText.innerHTML = '<span class="loading-spinner"></span> Memuat...';
+            } else {
+                button.disabled = false;
+                const originalText = buttonId === 'btn-quota' ? '📊 Cek Kuota' :
+                                    buttonId === 'btn-membership' ? '👤 Cek Status' :
+                                    '📊 Cek Paket';
+                btnText.textContent = originalText;
+            }
+        }
+
+        function showError(containerId, message) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `
+                <div class="error-card">
+                    <div class="error-title">⚠️ Terjadi Kesalahan</div>
+                    <div class="error-message">${escapeHtml(message)}</div>
+                </div>
+            `;
+        }
+
+        function clearErrors() {
+            document.getElementById('error-container-circle').innerHTML = '';
+            document.getElementById('error-container-xl').innerHTML = '';
+        }
+
+        function clearResults(containerId) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = '';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatLabel(key) {
+            const labels = {
+                // General
+                'ok': 'Status',
+                'msisdn': 'Nomor HP',
+                'joined': 'Status Keanggotaan',
+                'status_text': 'Status',
+                'status_color': 'Warna Status',
+                'source': 'Sumber',
+                'fetched_at': 'Diambil Pada',
+                'http_status': 'HTTP Status',
+                'quota': 'Data Kuota',
+                'membership': 'Data Status',
+                'used_quota': 'Kuota Terpakai',
+                'remaining_quota': 'Sisa Kuota',
+                'used': 'Terpakai',
+                'remaining': 'Sisa',
+                'main_quota': 'Kuota Utama',
+                'bonus_quota': 'Kuota Bonus',
+                'expiry_date': 'Masa Berlaku',
+                'validity': 'Masa Berlaku',
+
+                // Quota labels
+                'quota.used.gb': 'Pemakaian Kuota (GB)',
+                'Quota.used.gb': 'Pemakaian Kuota (GB)',
+                'QUOTA.USED.GB': 'Pemakaian Kuota (GB)',
+                'quota.remaining.gb': 'Sisa Kuota (GB)',
+                'Quota.remaining.gb': 'Sisa Kuota (GB)',
+                'QUOTA.REMAINING.GB': 'Sisa Kuota (GB)',
+                'quota.allocation.label': 'Total Semua Kuota',
+                'Quota.allocation.label': 'Total Semua Kuota',
+                'QUOTA.ALLOCATION.LABEL': 'Total Semua Kuota',
+                'quota.allocation.gb': 'Total Alokasi Kuota (GB)',
+                'Quota.allocation.gb': 'Total Alokasi Kuota (GB)',
+                'quota.unlimited': 'Kuota Tak Terbatas',
+                'Quota.unlimited': 'Kuota Tak Terbatas',
+                'quota.total': 'Total Kuota',
+                'Quota.total': 'Total Kuota',
+                'quota.usage': 'Penggunaan Kuota',
+                'Quota.usage': 'Penggunaan Kuota',
+                'quota.valid_until': 'Berlaku Sampai',
+                'Quota.valid_until': 'Berlaku Sampai',
+                'quota.renewal_date': 'Tanggal Perpanjangan',
+                'Quota.renewal_date': 'Tanggal Perpanjangan',
+                'quota.data_limit': 'Batas Data',
+                'Quota.data_limit': 'Batas Data',
+                'quota.remaining_calls': 'Sisa Panggilan',
+                'Quota.remaining_calls': 'Sisa Panggilan',
+                'quota.remaining_sms': 'Sisa SMS',
+                'Quota.remaining_sms': 'Sisa SMS',
+                'quota.remaining_voice': 'Sisa Menit Suara',
+                'Quota.remaining_voice': 'Sisa Menit Suara',
+
+                // Membership labels
+                'plan_name': 'Nama Paket',
+                'plan_type': 'Tipe Paket',
+                'plan_price': 'Harga Paket',
+                'plan_duration': 'Durasi Paket',
+                'plan_start_date': 'Tanggal Mulai Paket',
+                'plan_end_date': 'Tanggal Selesai Paket',
+                'auto_renewal': 'Perpanjangan Otomatis',
+                'payment_method': 'Metode Pembayaran',
+                'payment_status': 'Status Pembayaran',
+                'billing_cycle': 'Siklus Tagihan',
+                'account_status': 'Status Akun',
+                'subscription_status': 'Status Berlangganan',
+                'customer_type': 'Tipe Pelanggan',
+                'customer_tier': 'Tier Pelanggan',
+
+                // Network labels
+                'network_name': 'Nama Jaringan',
+                'network_type': 'Tipe Jaringan',
+                'network_code': 'Kode Jaringan',
+                'operator': 'Operator',
+                'provider': 'Penyedia',
+                'connection_type': 'Tipe Koneksi',
+
+                // Device labels
+                'device_name': 'Nama Perangkat',
+                'device_type': 'Tipe Perangkat',
+                'device_model': 'Model Perangkat',
+                'device_brand': 'Merek Perangkat',
+                'device_os': 'OS Perangkat',
+
+                // Location labels
+                'location': 'Lokasi',
+                'city': 'Kota',
+                'region': 'Wilayah',
+                'province': 'Provinsi',
+                'country': 'Negara',
+                'address': 'Alamat',
+
+                // Other common labels
+                'created_at': 'Dibuat Pada',
+                'updated_at': 'Diperbarui Pada',
+                'activated_at': 'Diaktifkan Pada',
+                'deactivated_at': 'Dinonaktifkan Pada',
+                'last_login': 'Login Terakhir',
+                'last_activity': 'Aktivitas Terakhir',
+                'transaction_date': 'Tanggal Transaksi',
+                'payment_date': 'Tanggal Pembayaran',
+                'renewal_date': 'Tanggal Perpanjangan',
+                'expiry': 'Masa Berlaku',
+                'valid_from': 'Berlaku Dari',
+                'valid_to': 'Berlaku Sampai',
+                'active': 'Aktif',
+                'inactive': 'Tidak Aktif',
+                'suspended': 'Ditanggu',
+                'terminated': 'Dihentikan',
+                'pending': 'Menunggu',
+                'processing': 'Sedang Diproses',
+                'completed': 'Selesai',
+                'failed': 'Gagal',
+                'success': 'Berhasil',
+                'error': 'Error',
+                'warning': 'Peringatan',
+                'info': 'Informasi',
+                'message': 'Pesan',
+                'description': 'Deskripsi',
+                'note': 'Catatan',
+                'remark': 'Keterangan',
+                'code': 'Kode',
+                'type': 'Tipe',
+                'category': 'Kategori',
+                'name': 'Nama',
+                'value': 'Nilai',
+                'unit': 'Satuan',
+                'limit': 'Batas',
+                'amount': 'Jumlah',
+                'balance': 'Saldo',
+                'total': 'Total',
+                'used': 'Terpakai',
+                'available': 'Tersedia',
+                'percentage': 'Persentase',
+                'speed': 'Kecepatan',
+                'download_speed': 'Kecepatan Unduh',
+                'upload_speed': 'Kecepatan Unggah',
+                'data_speed': 'Kecepatan Data',
+                'voice_speed': 'Kecepatan Suara',
+                'signal_strength': 'Kekuatan Sinyal',
+                'quality': 'Kualitas',
+                'latency': 'Latensi',
+                'ping': 'Ping',
+                'mode': 'Mode'
+            };
+            return labels[key] || key.replace(/_/g, ' ').replace(/\./g, ' ').replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim();
+        }
+
+        function getStatusBadge(value) {
+            if (typeof value === 'boolean') {
+                return value ? '<span class="status-badge green">Aktif</span>' : '<span class="status-badge red">Tidak Aktif</span>';
+            }
+
+            const strValue = String(value).toLowerCase();
+            if (strValue === 'true' || strValue === 'yes' || strValue === 'ya' || strValue === 'aktif') {
+                return '<span class="status-badge green">Aktif</span>';
+            }
+            if (strValue === 'false' || strValue === 'no' || strValue === 'tidak' || strValue === 'non-aktif') {
+                return '<span class="status-badge red">Tidak Aktif</span>';
+            }
+            if (strValue === 'pending') {
+                return '<span class="status-badge yellow">Pending</span>';
+            }
+            if (strValue === 'error' || strValue === 'gagal' || strValue.includes('kesalahan')) {
+                return '<span class="status-badge red">' + escapeHtml(String(value)) + '</span>';
+            }
+
+            return escapeHtml(String(value));
+        }
+
+        function getAllQuotaData(data, prefix = '') {
+            const quotaItems = [];
+
+            if (!data || typeof data !== 'object') {
+                return quotaItems;
+            }
+
+            Object.entries(data).forEach(([key, value]) => {
+                const fullKey = prefix ? `${prefix}.${key}` : key;
+
+                if (value !== null && value !== undefined) {
+                    if (typeof value === 'object' && !Array.isArray(value)) {
+                        quotaItems.push(...getAllQuotaData(value, fullKey));
+                    } else if (typeof value !== 'object') {
+                        quotaItems.push({ key: fullKey, value: value });
+                    }
+                }
+            });
+
+            return quotaItems;
+        }
+
+        function extractQuotaSummary(data) {
+            const summary = { msisdn: null, total: null, used: null, remaining: null };
+
+            if (data.msisdn) {
+                summary.msisdn = data.msisdn;
+            }
+
+            const allData = getAllQuotaData(data);
+            allData.forEach(item => {
+                const keyLower = item.key.toLowerCase();
+
+                if (keyLower.includes('total') && !keyLower.includes('used') && !keyLower.includes('remaining')) {
+                    const numValue = parseFloat(String(item.value));
+                    if (!isNaN(numValue) && summary.total === null) {
+                        summary.total = numValue;
+                    }
+                }
+                if (keyLower.includes('used') || keyLower.includes('terpakai')) {
+                    const numValue = parseFloat(String(item.value));
+                    if (!isNaN(numValue) && summary.used === null) {
+                        summary.used = numValue;
+                    }
+                }
+                if (keyLower.includes('remaining') || keyLower.includes('sisa')) {
+                    const numValue = parseFloat(String(item.value));
+                    if (!isNaN(numValue) && summary.remaining === null) {
+                        summary.remaining = numValue;
+                    }
+                }
+            });
+
+            if (summary.total !== null && summary.used !== null && summary.remaining === null) {
+                summary.remaining = summary.total - summary.used;
+            }
+
+            return summary;
+        }
+
+        function renderQuotaCard(data) {
+            if (!data || typeof data !== 'object') return '';
+
+            const summary = extractQuotaSummary(data);
+            const allData = getAllQuotaData(data);
+            const excludeKeys = ['meta', 'error', 'total_quota', 'total', 'quota', 'usage', 'lifecycle', 'epoch', 'source', 'http_status', 'ok', 'mode', 'fetched_at'];
+            const filteredData = allData.filter(item => {
+                const keyLower = item.key.toLowerCase();
+                return !excludeKeys.includes(keyLower) &&
+                       !keyLower.includes('usage.pct') &&
+                       !keyLower.includes('.pct') &&
+                       !keyLower.includes('usage_pct') &&
+                       !keyLower.includes('usagepct') &&
+                       !keyLower.includes('lifecycle') &&
+                       !keyLower.includes('total') &&
+                       !keyLower.includes('allocation.gb') &&
+                       !keyLower.includes('source') &&
+                       !keyLower.includes('meta.');
+            });
+
+            let html = `
+                <div class="result-card">
+                    <div class="result-card-header">
+                        <div class="result-card-title">📊 Informasi Kuota Circle</div>
+                    </div>
+                    <div class="result-card-content">
+            `;
+
+            if (summary.msisdn) {
+                html += `
+                    <div class="msisdn-display">
+                        <div class="msisdn-display-label">Nomor HP</div>
+                        <div class="msisdn-display-value">${escapeHtml(summary.msisdn)}</div>
+                    </div>
+                `;
+            }
+
+            if (summary.remaining !== null || summary.total !== null) {
+                const displayValue = summary.remaining !== null ? `${summary.remaining} GB` : `${summary.total} GB`;
+                html += `
+                    <div class="quota-highlight">
+                        <div class="quota-highlight-label">Total Sisa Kuota</div>
+                        <div class="quota-highlight-value">${displayValue}</div>
+                    </div>
+                `;
+            }
+
+            if (filteredData.length > 0) {
+                html += `
+                    <div class="detail-section">
+                        <div class="detail-title">Detail Kuota</div>
+                        <div class="detail-list">
+                `;
+                filteredData.forEach(item => {
+                    html += `
+                        <div class="detail-item">
+                            <span class="detail-item-label">${formatLabel(item.key)}</span>
+                            <span class="detail-item-value">${escapeHtml(String(item.value))}</span>
+                        </div>
+                    `;
+                });
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (data.error) {
+                html += `
+                    <div class="error-card">
+                        <div class="error-title">⚠️ Pesan</div>
+                        <div class="error-message">${escapeHtml(data.error)}</div>
+                    </div>
+                `;
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            return html;
+        }
+
+        function renderMembershipCard(data) {
+            if (!data || typeof data !== 'object') return '';
+
+            const excludeKeys = ['meta', 'error', 'source', 'http_status', 'ok', 'membership', 'mode', 'fetched_at', 'usage_pct', 'usage.pct', 'usagepct'];
+            let dataToRender = data;
+
+            if (data.membership && typeof data.membership === 'object') {
+                dataToRender = {
+                    msisdn: data.msisdn,
+                    ...data.membership
+                };
+            }
+
+            const allData = getAllQuotaData(dataToRender);
+            const filteredData = allData.filter(item => {
+                const keyLower = item.key.toLowerCase();
+                return !excludeKeys.includes(keyLower) &&
+                       !keyLower.includes('usage.pct') &&
+                       !keyLower.includes('usage_pct') &&
+                       !keyLower.includes('usagepct') &&
+                       !keyLower.includes('.pct') &&
+                       !keyLower.includes('source') &&
+                       !keyLower.includes('meta.');
+            });
+
+            if (filteredData.length === 0) {
+                return `
+                    <div class="result-card membership">
+                        <div class="result-card-header membership">
+                            <div class="result-card-title">👤 Data Status Circle</div>
+                        </div>
+                        <div class="result-card-content">
+                            <div style="text-align: center; padding: 2rem; color: #9ca3af;">
+                                😕 Tidak ada data membership yang tersedia
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let html = `
+                <div class="result-card membership">
+                    <div class="result-card-header membership">
+                        <div class="result-card-title">👤 Data Status Circle</div>
+                    </div>
+                    <div class="result-card-content">
+            `;
+
+            filteredData.forEach(item => {
+                const formattedValue = getStatusBadge(item.value);
+                html += `
+                    <div class="detail-item">
+                        <span class="detail-item-label">${formatLabel(item.key)}</span>
+                        <span class="detail-item-value">${formattedValue}</span>
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            return html;
+        }
+
+        async function checkQuota() {
+            const input = document.getElementById('msisdn').value.trim();
+            const phone = normalizePhoneNumber(input, 'circle');
+
+            clearErrors();
+            currentCircleView = 'quota';
+            document.getElementById('result-quota').innerHTML = '';
+            document.getElementById('result-membership').innerHTML = '';
+
+            if (!validatePhone(phone, 'circle')) {
+                showError('error-container-circle', 'Format nomor tidak valid. Gunakan format 62xxxxxxxxxx untuk Circle');
+                return;
+            }
+
+            setButtonLoading('btn-quota', true);
+
+            try {
+                const url = API_BASE.circleQuota + '?msisdn=' + encodeURIComponent(phone);
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error('Gagal mengambil data kuota');
+                }
+
+                const data = await response.json();
+                document.getElementById('result-quota').innerHTML = renderQuotaCard(data);
+
+                if (!data.ok && data.error) {
+                    showError('error-container-circle', data.error);
+                }
+            } catch (error) {
+                showError('error-container-circle', 'Gagal mengambil data kuota: ' + error.message);
+            } finally {
+                setButtonLoading('btn-quota', false);
+            }
+        }
+
+        async function checkMembership() {
+            const input = document.getElementById('msisdn').value.trim();
+            const phone = normalizePhoneNumber(input, 'circle');
+
+            clearErrors();
+            currentCircleView = 'membership';
+            document.getElementById('result-quota').innerHTML = '';
+            document.getElementById('result-membership').innerHTML = '';
+
+            if (!validatePhone(phone, 'circle')) {
+                showError('error-container-circle', 'Format nomor tidak valid. Gunakan format 62xxxxxxxxxx untuk Circle');
+                return;
+            }
+
+            setButtonLoading('btn-membership', true);
+
+            try {
+                const url = API_BASE.circleMembership + '?msisdn=' + encodeURIComponent(phone);
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error('Gagal mengambil data membership');
+                }
+
+                const data = await response.json();
+                document.getElementById('result-membership').innerHTML = renderMembershipCard(data);
+
+                if (!data.ok && data.error) {
+                    showError('error-container-circle', data.error);
+                }
+            } catch (error) {
+                showError('error-container-circle', 'Gagal mengambil data membership: ' + error.message);
+            } finally {
+                setButtonLoading('btn-membership', false);
+            }
+        }
+
+        async function checkXLAxis() {
+            const input = document.getElementById('nomor').value.trim();
+            const phone = normalizePhoneNumber(input, 'xl-axis');
+
+            clearErrors();
+            clearResults('result-container-xl');
+
+            if (!validatePhone(phone, 'xl-axis')) {
+                showError('error-container-xl', 'Format nomor tidak valid. Gunakan format 08xxxxxxxx untuk XL/Axis');
+                return;
+            }
+
+            setButtonLoading('btn-xl', true);
+
+            try {
+                const url = API_BASE.xlAxis + '?msisdn=' + encodeURIComponent(phone) + '&isJSON=true';
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': 'Basic c2lkb21wdWxhcGk6YXBpZ3drbXNw',
+                        'X-API-Key': '60ef29aa-a648-4668-90ae-20951ef90c55',
+                        'X-App-Version': '4.0.0'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Gagal menghubungi server');
+                }
+
+                const data = await response.json();
+
+                if (data.statusCode !== 200) {
+                    showError('error-container-xl', data.message || 'Gagal memproses');
+                } else if (data.status === false) {
+                    showError('error-container-xl', data.message || 'Gagal memproses');
+                } else if (data.data && data.data.hasil) {
+                    let formattedResult = data.data.hasil
+                        .replace(/<br>/g, '\n')
+                        .replace(/🗓.*\n?/gu, '')
+                        .replace(/🔰.*\n?/gu, '')
+                        .trim();
+
+                    document.getElementById('result-container-xl').innerHTML = `
+                        <div class="result-card xl-axis">
+                            <div class="result-card-header xl-axis">
+                                <div class="result-card-title">✅ Hasil Cek Paket XL/Axis</div>
+                            </div>
+                            <div class="result-card-content">
+                                <pre class="result-pre">${escapeHtml(formattedResult)}</pre>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                showError('error-container-xl', 'Error: ' + error.message);
+            } finally {
+                setButtonLoading('btn-xl', false);
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                if (currentTab === 'circle') {
+                    checkQuota();
+                } else {
+                    checkXLAxis();
+                }
+            }
+        }
+    </script>
+</body>
+</html>
